@@ -5,7 +5,7 @@ Defines schemas for anomaly incidents, TreeSHAP feature attributions, and ISO 90
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+
 from pydantic import BaseModel, Field
 
 
@@ -29,8 +29,8 @@ class AgentDiagnosticReport(BaseModel):
     confidence: float = Field(..., ge=0.0, le=1.0, description="Diagnostic model confidence score")
     astm_sop_code: str = Field(..., description="Applicable ASTM / EPA / ISO standard procedure")
     root_cause_explanation: str = Field(..., description="Technical engineering rationale explaining the failure")
-    remediation_protocol: List[str] = Field(..., description="Sequential steps for technician or sustaining engineer")
-    chain_of_thought_steps: List[str] = Field(..., description="Step-by-step diagnostic reasoning log")
+    remediation_protocol: list[str] = Field(..., description="Sequential steps for technician or sustaining engineer")
+    chain_of_thought_steps: list[str] = Field(..., description="Step-by-step diagnostic reasoning log")
     agent_latency_ms: float = Field(..., description="Agent inference turnaround time in milliseconds")
 
 
@@ -43,12 +43,13 @@ class AnomalyIncidentRecord(BaseModel):
     composite_score: float = Field(..., ge=0.0, le=1.0, description="Ensemble ML + PINN anomaly score")
     
     # Explainable AI & Domain Attribution
-    shap_contributions_json: Dict[str, float] = Field(default_factory=dict, description="TreeSHAP marginal feature attributions")
+    shap_contributions_json: dict[str, float] = Field(default_factory=dict, description="TreeSHAP marginal feature attributions")
     pinn_violation: bool = Field(default=False, description="Whether physical thermodynamic bounds were breached")
-    agent_report: Optional[AgentDiagnosticReport] = Field(None, description="Full autonomous agent diagnosis")
+    agent_report: AgentDiagnosticReport | None = Field(None, description="Full autonomous agent diagnosis")
     
     # ISO 9001 Metrological Sign-off
     status: IncidentStatus = Field(default=IncidentStatus.OPEN, description="Incident lifecycle state")
-    resolved_by: Optional[str] = Field(None, description="Sustaining engineer identity")
-    resolved_at: Optional[datetime] = Field(None, description="Resolution timestamp")
-    resolution_notes: Optional[str] = Field(None, description="Corrective actions logged for ISO audit trail")
+    resolved_by: str | None = Field(None, description="Sustaining engineer identity")
+    resolved_at: datetime | None = Field(None, description="Resolution timestamp")
+    resolution_notes: str | None = Field(None, description="Corrective actions logged for ISO audit trail")
+

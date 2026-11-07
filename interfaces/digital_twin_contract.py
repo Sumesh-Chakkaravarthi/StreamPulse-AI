@@ -4,7 +4,7 @@ Defines schemas for hardware aging kinetics, Remaining Useful Life (RUL), and 45
 """
 
 from datetime import datetime
-from typing import List, Optional
+
 from pydantic import BaseModel, Field
 
 
@@ -34,4 +34,5 @@ class DigitalTwinForecastResponse(BaseModel):
     node_id: str = Field(..., description="Target sensor station identifier")
     generated_at: datetime = Field(default_factory=datetime.utcnow, description="Forecast calculation timestamp")
     state: DigitalTwinState = Field(..., description="Current operational state")
-    forecast_points: List[ForecastPoint] = Field(..., description="Daily trajectory degradation curve")
+    forecast_points: list[ForecastPoint] = Field(..., description="Daily trajectory degradation curve")
+

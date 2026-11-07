@@ -5,7 +5,8 @@ Defines Pydantic v2 schemas for high-frequency industrial water quality and elec
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
+
 from pydantic import BaseModel, Field, field_validator
 
 
@@ -40,7 +41,7 @@ class TelemetryPacket(BaseModel):
     calibration_status: SensorCalibrationStatus = Field(default=SensorCalibrationStatus.VALID, description="ISO 17025 validity state")
     
     # Optional Station Metadata
-    metadata: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Hardware metadata (firmware, serial, skid ID)")
+    metadata: dict[str, Any] | None = Field(default_factory=dict, description="Hardware metadata (firmware, serial, skid ID)")
 
     @field_validator("ph")
     @classmethod
@@ -52,4 +53,5 @@ class TelemetryPacket(BaseModel):
 
 class TelemetryBatchRequest(BaseModel):
     """Bulk ingestion payload for PLC skids and multi-sensor edge gateways."""
-    items: List[TelemetryPacket] = Field(..., min_length=1, max_length=1000, description="Batch of sensor telemetry frames")
+    items: list[TelemetryPacket] = Field(..., min_length=1, max_length=1000, description="Batch of sensor telemetry frames")
+
