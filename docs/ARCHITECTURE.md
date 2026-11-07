@@ -29,7 +29,7 @@ sequenceDiagram
     Core->>ML: Evaluate Point & Sequential Trajectory Errors
     Core->>Twin: Update Probe Aging & 45-Day RUL Forecast
 
-    alt Multi-Modal Anomaly Trip (Score >= 0.60)
+    alt Multi-Modal Anomaly Trip [Composite Score >= 0.60]
         ML->>Agent: Trigger Autonomous Root-Cause Investigation
         Agent->>Agent: Query ASTM/ISO Troubleshooting Knowledge Base
         Agent->>Agent: Execute Chain-of-Thought (CoT) Multi-Hypothesis Match

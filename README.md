@@ -43,7 +43,8 @@ flowchart TD
         EDGE_AGENTS["Edge Gateway Agents (1s Rolling Window Aggregation)"]
         SQLITE_BUF[("Local SQLite Persistent Queue (Zero Data Loss)")]
         BACKOFF["Tenacity Exponential Backoff Retries"]
-        EDGE_AGENTS -->|Network Partition Drop| SQLITE_BUF --> BACKOFF
+        EDGE_AGENTS -->|"Network Partition Drop"| SQLITE_BUF
+        SQLITE_BUF --> BACKOFF
     end
 
     subgraph INGESTION ["3. Event Streaming & High-Throughput Core"]
@@ -76,18 +77,27 @@ flowchart TD
     end
 
     FIELD --> EDGE_AGENTS
-    EDGE_AGENTS -->|Online Stream| BROKER --> API
-    BACKOFF -->|Reconnected Flush| API
-    API --> VAL --> DB
+    EDGE_AGENTS -->|"Online Stream"| BROKER
+    BROKER --> API
+    BACKOFF -->|"Reconnected Flush"| API
+    API --> VAL
+    VAL --> DB
     API --> OTEL
-    API --> PINN & ISO_FOREST & SEQ_AUTO
-    PINN & ISO_FOREST & SEQ_AUTO -->|Anomaly Trip (Score >= 0.60)| SHAP
+    API --> PINN
+    API --> ISO_FOREST
+    API --> SEQ_AUTO
+    PINN -->|"Anomaly Detected"| SHAP
+    ISO_FOREST -->|"Anomaly Detected"| SHAP
+    SEQ_AUTO -->|"Anomaly Detected"| SHAP
     SHAP --> AGENT
     KB <--> AGENT
-    AGENT --> AUDIT --> DB
+    AGENT --> AUDIT
+    AUDIT --> DB
     AGENT --> ALERTS
-    API --> TWIN --> DASH
-    API --> WS --> DASH
+    API --> TWIN
+    TWIN --> DASH
+    API --> WS
+    WS --> DASH
     SANDBOX -.-> FIELD
 ```
 
