@@ -1,0 +1,953 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "StreamPulse AI",
+    "description": "Industrial IoT Telemetry Ingestion, Machine Learning Anomaly Detection, & SHAP Root-Cause Diagnostic Pipeline",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/v1/telemetry": {
+      "post": {
+        "summary": "Ingest Telemetry",
+        "description": "High-Throughput Ingestion Gateway.\nExecutes Tier-1 physics guardrails, Isolation Forest, sequential drift autoencoder,\nand triggers Autonomous Diagnostic Agent upon anomaly detection.",
+        "operationId": "ingest_telemetry_api_v1_telemetry_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TelemetryPayload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnomalyDiagnostic"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/telemetry/batch": {
+      "post": {
+        "summary": "Ingest Batch Telemetry",
+        "description": "High-throughput bulk ingestion endpoint for multi-sensor PLC skids.",
+        "operationId": "ingest_batch_telemetry_api_v1_telemetry_batch_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TelemetryBatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/telemetry/latest": {
+      "get": {
+        "summary": "Get Latest Telemetry",
+        "description": "Retrieve most recent telemetry frame for each registered sensor node.",
+        "operationId": "get_latest_telemetry_api_v1_telemetry_latest_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/telemetry/history": {
+      "get": {
+        "summary": "Get Telemetry History",
+        "description": "Retrieve time-series telemetry history for charting.",
+        "operationId": "get_telemetry_history_api_v1_telemetry_history_get",
+        "parameters": [
+          {
+            "name": "node_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Node Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000,
+              "default": 150,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/nodes": {
+      "get": {
+        "summary": "List Sensor Nodes",
+        "description": "List all registered industrial sensor stations with calibration health and RUL.",
+        "operationId": "list_sensor_nodes_api_v1_nodes_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/digital-twins": {
+      "get": {
+        "summary": "Get Digital Twins",
+        "description": "Retrieve fleet Digital Twin states and degradation status.",
+        "operationId": "get_digital_twins_api_v1_digital_twins_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/digital-twins/{node_id}/forecast": {
+      "get": {
+        "summary": "Get Digital Twin Forecast",
+        "description": "Retrieve 45-day predictive wear and degradation trajectory for a specific probe.",
+        "operationId": "get_digital_twin_forecast_api_v1_digital_twins__node_id__forecast_get",
+        "parameters": [
+          {
+            "name": "node_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Node Id"
+            }
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 45,
+              "title": "Days"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/edge/status": {
+      "get": {
+        "summary": "Get Edge Status",
+        "description": "Returns local store-and-forward edge buffer telemetry across nodes.",
+        "operationId": "get_edge_status_api_v1_edge_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/edge/partition-toggle": {
+      "post": {
+        "summary": "Toggle Edge Partition",
+        "description": "Simulates physical network partition drop or reconnect on an edge node.",
+        "operationId": "toggle_edge_partition_api_v1_edge_partition_toggle_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EdgePartitionToggleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/edge/flush/{node_id}": {
+      "post": {
+        "summary": "Flush Edge Buffer",
+        "description": "Triggers manual store-and-forward flush of buffered edge packets.",
+        "operationId": "flush_edge_buffer_api_v1_edge_flush__node_id__post",
+        "parameters": [
+          {
+            "name": "node_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Node Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/observability/stats": {
+      "get": {
+        "summary": "Get Observability Stats",
+        "description": "Retrieve real-time latency percentiles (p50, p95, p99) and ingestion throughput.",
+        "operationId": "get_observability_stats_api_v1_observability_stats_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/anomalies": {
+      "get": {
+        "summary": "Get Anomalies",
+        "description": "Retrieve anomaly incident log with SHAP feature attributions and AI Agent diagnostic reports.",
+        "operationId": "get_anomalies_api_v1_anomalies_get",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "node_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Node Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/anomalies/resolve/{incident_uuid}": {
+      "post": {
+        "summary": "Resolve Anomaly",
+        "description": "Sustaining Engineer sign-off endpoint for ISO 9001 quality audit trail.",
+        "operationId": "resolve_anomaly_api_v1_anomalies_resolve__incident_uuid__post",
+        "parameters": [
+          {
+            "name": "incident_uuid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Incident Uuid"
+            }
+          },
+          {
+            "name": "engineer_notes",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Sustaining engineer diagnostic sign-off notes",
+              "title": "Engineer Notes"
+            },
+            "description": "Sustaining engineer diagnostic sign-off notes"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/simulator/inject-fault": {
+      "post": {
+        "summary": "Inject Simulated Fault",
+        "description": "Live interactive injection of synthetic probe failures.",
+        "operationId": "inject_simulated_fault_api_v1_simulator_inject_fault_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FaultInjectionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/simulator/clear-fault": {
+      "post": {
+        "summary": "Clear Simulated Fault",
+        "description": "Clear active simulated fault on a node.",
+        "operationId": "clear_simulated_fault_api_v1_simulator_clear_fault_post",
+        "parameters": [
+          {
+            "name": "node_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Node Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/health": {
+      "get": {
+        "summary": "Health Check",
+        "description": "System health check endpoint.",
+        "operationId": "health_check_api_v1_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/metrics": {
+      "get": {
+        "summary": "Prometheus Metrics",
+        "description": "Prometheus exposition format endpoint for scraping telemetry & latency.",
+        "operationId": "prometheus_metrics_metrics_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "summary": "Root",
+        "operationId": "root__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AnomalyDiagnostic": {
+        "properties": {
+          "node_id": {
+            "type": "string",
+            "title": "Node Id"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp"
+          },
+          "is_anomaly": {
+            "type": "boolean",
+            "title": "Is Anomaly"
+          },
+          "anomaly_score": {
+            "type": "number",
+            "title": "Anomaly Score",
+            "description": "Anomaly confidence score 0.0 - 1.0"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity",
+            "description": "NOMINAL, WARNING, CRITICAL"
+          },
+          "primary_fault_feature": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Primary Fault Feature"
+          },
+          "feature_contribution_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Feature Contribution Pct"
+          },
+          "shap_contributions": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Shap Contributions"
+          },
+          "diagnostic_memo": {
+            "type": "string",
+            "title": "Diagnostic Memo"
+          },
+          "recommended_action": {
+            "type": "string",
+            "title": "Recommended Action"
+          },
+          "point_anomaly_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Point Anomaly Score"
+          },
+          "pinn_violation_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pinn Violation Score"
+          },
+          "sequence_drift_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sequence Drift Score"
+          },
+          "agent_report": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agent Report"
+          }
+        },
+        "type": "object",
+        "required": [
+          "node_id",
+          "timestamp",
+          "is_anomaly",
+          "anomaly_score",
+          "severity",
+          "diagnostic_memo",
+          "recommended_action"
+        ],
+        "title": "AnomalyDiagnostic"
+      },
+      "EdgePartitionToggleRequest": {
+        "properties": {
+          "node_id": {
+            "type": "string",
+            "title": "Node Id"
+          },
+          "connected": {
+            "type": "boolean",
+            "title": "Connected",
+            "description": "True to connect link, False to simulate network partition drop"
+          }
+        },
+        "type": "object",
+        "required": [
+          "node_id",
+          "connected"
+        ],
+        "title": "EdgePartitionToggleRequest"
+      },
+      "FaultInjectionRequest": {
+        "properties": {
+          "node_id": {
+            "type": "string",
+            "title": "Node Id"
+          },
+          "fault_type": {
+            "type": "string",
+            "title": "Fault Type",
+            "description": "DRIFT, BIOFOULING, JUNCTION_POISON, FLATLINE_FAIL, CAVITATION_SPIKE"
+          },
+          "duration_seconds": {
+            "type": "integer",
+            "maximum": 600.0,
+            "minimum": 5.0,
+            "title": "Duration Seconds",
+            "default": 60
+          },
+          "intensity": {
+            "type": "number",
+            "maximum": 5.0,
+            "minimum": 0.1,
+            "title": "Intensity",
+            "default": 1.0
+          }
+        },
+        "type": "object",
+        "required": [
+          "node_id",
+          "fault_type"
+        ],
+        "title": "FaultInjectionRequest"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "TelemetryBatch": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/TelemetryPayload"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "title": "TelemetryBatch"
+      },
+      "TelemetryPayload": {
+        "properties": {
+          "node_id": {
+            "type": "string",
+            "title": "Node Id",
+            "description": "Industrial telemetry node identifier, e.g. NODE-WA-01"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp",
+            "description": "UTC ISO 8601 timestamp"
+          },
+          "ph": {
+            "type": "number",
+            "maximum": 14.0,
+            "minimum": 0.0,
+            "title": "Ph",
+            "description": "pH level (0-14)"
+          },
+          "temperature_c": {
+            "type": "number",
+            "maximum": 100.0,
+            "minimum": -10.0,
+            "title": "Temperature C",
+            "description": "Process temperature in Celsius"
+          },
+          "turbidity_ntu": {
+            "type": "number",
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Turbidity Ntu",
+            "description": "Nephelometric Turbidity Units"
+          },
+          "flow_rate_lpm": {
+            "type": "number",
+            "maximum": 200.0,
+            "minimum": 0.0,
+            "title": "Flow Rate Lpm",
+            "description": "Flow rate in Liters Per Minute"
+          },
+          "conductivity_us_cm": {
+            "type": "number",
+            "maximum": 5000.0,
+            "minimum": 0.0,
+            "title": "Conductivity Us Cm",
+            "description": "Conductivity in microSiemens/cm"
+          },
+          "electrochemical_current_ua": {
+            "type": "number",
+            "title": "Electrochemical Current Ua",
+            "description": "Potentiostat / Amperometric cell current in microAmps"
+          },
+          "applied_potential_v": {
+            "type": "number",
+            "title": "Applied Potential V",
+            "description": "Applied electrode potential in Volts",
+            "default": 0.45
+          },
+          "snr_db": {
+            "type": "number",
+            "title": "Snr Db",
+            "description": "Signal-to-noise ratio in dB",
+            "default": 45.0
+          },
+          "calibration_status": {
+            "type": "string",
+            "title": "Calibration Status",
+            "description": "VALID, DRIFT_WARNING, or EXPIRED",
+            "default": "VALID"
+          },
+          "firmware_version": {
+            "type": "string",
+            "title": "Firmware Version",
+            "default": "v2.4.1-rc"
+          },
+          "metadata": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metadata"
+          },
+          "edge_metrics": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Edge Metrics"
+          }
+        },
+        "type": "object",
+        "required": [
+          "node_id",
+          "ph",
+          "temperature_c",
+          "turbidity_ntu",
+          "flow_rate_lpm",
+          "conductivity_us_cm",
+          "electrochemical_current_ua"
+        ],
+        "title": "TelemetryPayload"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

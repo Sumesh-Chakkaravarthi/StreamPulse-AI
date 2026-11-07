@@ -1,0 +1,82 @@
+# StreamPulse AI — Enterprise Architecture Deployment Specification
+# Illustrates the production container orchestration topology.
+
+version: '3.8'
+
+services:
+  # 1. Edge Ingestion & Diagnostic Core
+  backend:
+    image: streampulse/core:latest
+    container_name: streampulse-core
+    ports:
+      - "8000:8000"
+    environment:
+      - STREAM_BROKER_URL=kafka:9092
+      - DATABASE_URL=postgresql+asyncpg://admin:streampulse@postgres:5432/streampulse_db
+      - REDIS_URL=redis://redis:6379/0
+      - LOG_LEVEL=INFO
+    depends_on:
+      - postgres
+      - redis
+      - kafka
+
+  # 2. Cyber-Operations Mission Control Dashboard
+  dashboard:
+    image: streampulse/dashboard:latest
+    container_name: streampulse-dashboard
+    ports:
+      - "8501:8501"
+    environment:
+      - BACKEND_API_URL=http://backend:8000
+    depends_on:
+      - backend
+
+  # 3. High-Throughput Event Streaming Broker (Redpanda / Kafka)
+  kafka:
+    image: vectorized/redpanda:latest
+    container_name: streampulse-kafka
+    ports:
+      - "9092:9092"
+    command:
+      - redpanda start
+      - --smp 1
+      - --memory 1G
+      - --overprovisioned
+
+  # 4. In-Memory Ring Buffer & State Cache
+  redis:
+    image: redis:7-alpine
+    container_name: streampulse-redis
+    ports:
+      - "6379:6379"
+
+  # 5. Relational Time-Series & ISO Incident Store
+  postgres:
+    image: timescale/timescaledb:latest-pg15
+    container_name: streampulse-db
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=streampulse
+      - POSTGRES_DB=streampulse_db
+
+  # 6. Prometheus Telemetry & SLI/SLO Scraper
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: streampulse-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./docs/prometheus.yml:/etc/prometheus/prometheus.yml
+
+  # 7. Enterprise Grafana Metrics Visualization
+  grafana:
+    image: grafana/grafana:latest
+    container_name: streampulse-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=streampulse
+    depends_on:
+      - prometheus
