@@ -33,4 +33,5 @@ jobs:
       - name: Lint Python Interfaces
         run: |
           ruff check interfaces/
+          ruff format --check interfaces/
 

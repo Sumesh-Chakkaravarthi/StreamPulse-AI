@@ -31,4 +31,3 @@ __all__ = [
     "TelemetryBatchRequest",
     "TelemetryPacket",
 ]
-
